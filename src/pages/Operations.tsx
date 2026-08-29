@@ -24,10 +24,10 @@ function Icon({ name, className = "h-6 w-6" }: { name: IconName; className?: str
 }
 
 const serviceImages = {
-  delivery: "https://lh3.googleusercontent.com/aida-public/AB6AXuBhfmClhj9zJsvDDTqyzyAxBvB1wVJ61ZwC217wNjmgEbaVG_XbRhjgOlY6PfAQW_PvQNw49aY9MlI6umDh1xyOpOwL4owacr3IfeCU7HDLga4MQqwBXwCyLWFFYEvZXX4e6-ASR5-RiWVdgd7YRxc_IUauqKycAGZlBZUaGZl0rKc_38lszfcpLgdsSediQ4lPfVi07um9wP0QuJ1H2srl_rC0DCJsCJ9uELfF5D1oeq8nSsuSV4Ntys3fEty8gVn7TX_t4A2_wOM",
-  warehouse: "https://lh3.googleusercontent.com/aida-public/AB6AXuD4svk-ahelTFuMiJF9OxjGb-VGsMp4UCuw3CImFSLtHOOGi-7Lkf-j7cjYCpnsP2Me71CCRstyynracgsZg8ty0Ba4taBEDml3KhN5wtGObc6RNZ4oF8a7xm-P67efh11NZizxQSaqYx5Fo9-V9oM_r0_9m8-UzBF3DBturSjso-KMhNbIoBa2XRMlztKU1wi0XDKlk_DVMCM_wygqXyukZtPzXQQj-MvvnEcHV7h8SGN4slzsk3k9S977vwz6fmPxyRa9xqIZTfE",
-  transport: "https://lh3.googleusercontent.com/aida-public/AB6AXuAQrp_vEYeMe8MpqMHH7Mgy1iKmL43M2IJNpI_g9QOV2ktXTfpXOQmtSz56ow_sPWUSVAZvqySSl1LhZ__CpFmJh9vDH2sv_uBWfvXeAoX0WB87IhlHxUwxsLHkUKG-_2RSahsNX3zcm-Aq1D7erTHYQjE_oNRqjWQ-uuwmXPQX69PO8ryxoGUj_l6lCUM3HFT9q5sDEO52in2SHoHHL8mv_edOyX8OcBaZ1wmn_GMPZCJnXsywo23Zid5mJnie40eaCxQELcvPmaM",
-  workforce: "https://lh3.googleusercontent.com/aida-public/AB6AXuDk1K1KeHGzrgWLgxdXRec9TGDTCbDy2O1Z-1Cn4N1aju4DgsgnI6E6Fp-k8FDkXZBq21P26f0bH_gW4BXnCOCy5LIF0c4SxR717xoW2o64gfJ84fpXiDZpcnGdLRr8Au6UjVTgF5E0G4j-eqNItOLq7WQ_Vmqa87bChx4SS34_mbBIbD87OCzNbLw9VHMzb_5nJQQFPA7BhLc1pKQ5OMfSw_PWJXuJ25x7cc3DsqPvU8dj71LjY3DaENZYHwXGpJlnKxlugQwmwUs",
+  delivery: "/images/pages/operations/delivery.png",
+  warehouse: "/images/pages/operations/warehouse.png",
+  transport: "/images/pages/operations/transport.png",
+  workforce: "/images/pages/operations/workforce.png",
 };
 
 const accuracyTools: Array<{ icon: IconName; title: string; body: string }> = [
@@ -75,11 +75,11 @@ export default function Operations() {
                   </ul>
                   <a href="#operations-contact" className="mt-8 text-sm font-bold text-brand-700 hover:underline">Explore last-mile solutions →</a>
                 </div>
-                <img src={serviceImages.delivery} alt="Delivery operations" className="min-h-[300px] h-full w-full object-cover" />
+                <img src={serviceImages.delivery} alt="Delivery operations" loading="lazy" decoding="async" className="min-h-[300px] h-full w-full object-cover" />
               </article>
 
               <article className="enterprise-card overflow-hidden rounded-xl lg:col-span-4">
-                <img src={serviceImages.warehouse} alt="Warehouse operations" className="h-52 w-full object-cover" />
+                <img src={serviceImages.warehouse} alt="Warehouse operations" loading="lazy" decoding="async" className="h-52 w-full object-cover" />
                 <div className="p-8">
                   <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-slate-100 text-brand-700"><Icon name="warehouse" /></div>
                   <h3 className="mt-6 font-display text-2xl font-bold text-slate-950">Smart Warehousing</h3>
@@ -89,7 +89,7 @@ export default function Operations() {
               </article>
 
               <article className="enterprise-card overflow-hidden rounded-xl lg:col-span-12 lg:grid lg:grid-cols-2">
-                <img src={serviceImages.transport} alt="Long-haul freight transport" className="min-h-[380px] h-full w-full object-cover" />
+                <img src={serviceImages.transport} alt="Long-haul freight transport" loading="lazy" decoding="async" className="min-h-[380px] h-full w-full object-cover" />
                 <div className="flex flex-col justify-center p-8 lg:p-14">
                   <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-50 text-brand-700"><Icon name="route" /></div>
                   <h3 className="mt-6 font-display text-3xl font-bold text-slate-950">Freight Transportation</h3>
@@ -108,7 +108,7 @@ export default function Operations() {
           <Container>
             <div className="grid items-center gap-16 lg:grid-cols-2">
               <div className="relative pb-12">
-                <img src={serviceImages.workforce} alt="Logistics team coordinating warehouse operations" className="aspect-square w-full rounded-2xl object-cover shadow-enterprise" />
+                <img src={serviceImages.workforce} alt="Logistics team coordinating warehouse operations" loading="lazy" decoding="async" className="aspect-square w-full rounded-2xl object-cover shadow-enterprise" />
                 <div className="absolute bottom-0 right-3 max-w-xs rounded-xl border border-slate-200 bg-white/90 p-6 shadow-enterprise backdrop-blur-xl sm:right-10">
                   <div className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-700 text-white"><Icon name="people" className="h-5 w-5" /></span><strong className="font-display text-xl">People + Process</strong></div>
                   <p className="mt-3 text-sm leading-6 text-slate-600">Clear ownership and connected workflows across field and control-tower teams.</p>

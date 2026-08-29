@@ -6,9 +6,9 @@ import Header from "../components/Header";
 type JobCategory = "All Roles" | "Operations" | "Technology" | "On-field";
 
 const images = {
-  hero: "https://lh3.googleusercontent.com/aida-public/AB6AXuDwAjAcKH2jAGtuPIsYzR7aPS2Q2gjAPWWMqrWmn9F3JpLOSmSiqZTGgLpAYPVQtz7XpBmtBXnuHESimx6_O8fmxduPpdT0oG0GL_xDsF3G-zkKXi3-vvoCouJMt_WVuuI5ilOHqF10S3eFqSR4pCSae0OaIiPrx4iW6kfQz90UBBlbGENteKgpAYvQGU6f7_6dCf1XhecJRO81tUk4M2eFYA9Tc39eFIHwcgTsESjvbCrAv73BORW9DM7UFnUYXlVfd6nNU7T2yYk",
-  technology: "https://lh3.googleusercontent.com/aida-public/AB6AXuCNfsy0CzWnoVL7xxAfkhZDI6JAilkCj6kWDA0RZDmnPJllIGKl2gCtL0T89sSCKF_lMJz4MWbd-ZetaRy1NnmevpfZ-KvQoilzhNAL_2CgtqnNDEivtYx8V2g7xJszAm_SQ6JEF7eB_qiYjcvTeLqkJyfBNjm5_grlRmEZkrYxFpSInm8tytoxzUhu2zDXB1xCc0Peakaf2AbtHP49q5Tb4zxyhOkapQZBHwNDasP3wzhrB2eFD0vTMhqsW9zu-hUVuiO0Qu8Yl70",
-  team: "https://lh3.googleusercontent.com/aida-public/AB6AXuBHmJN-vdjPHZjzxjI8oOtxzWEnMOpUXsmAGIgGrB5QzKmQ9gKptXdx3DuflpG68xgNGrHF88XmPizb8zRrhFrOqo5QnHkDFhJMyRyAcOXFIuzeHYqmgfhm3tfshwx3E992oE0pFe1uQv0hyKTZBpN_T63P2vmDpHmC7tEhR9PFLUeHVvSh1xe7K_Iz6BEa_DF5UR5zQw4YuI4j86BsXTIvsLiKX6aMmIpDLaKCwVsXaR1LsyoCQL9Yha7ENkWncQefE58-jIwXzh0",
+  hero: "/images/pages/careers/hero.png",
+  technology: "/images/pages/careers/technology-team.png",
+  team: "/images/pages/careers/team.png",
 };
 
 const jobs: Array<{ title: string; location: string; type: string; category: Exclude<JobCategory, "All Roles"> }> = [
@@ -36,7 +36,7 @@ export default function Careers() {
 
       <main className="pt-16 lg:pt-[76px]">
         <section className="relative flex min-h-[680px] items-center overflow-hidden">
-          <img src={images.hero} alt="Logistics professionals collaborating at a distribution center" className="absolute inset-0 h-full w-full object-cover" />
+          <img src={images.hero} alt="Logistics professionals collaborating at a distribution center" fetchPriority="high" className="absolute inset-0 h-full w-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-r from-[#f7f9fb] via-[#f7f9fb]/95 to-[#f7f9fb]/10" />
           <Container className="relative py-20">
             <div className="max-w-2xl">
@@ -67,7 +67,7 @@ export default function Careers() {
                   <p className="mt-4 leading-7 text-slate-600">Work with shipment visibility, route planning, exception workflows, and operational analytics that solve real customer problems.</p>
                   <ul className="mt-6 space-y-3 text-sm font-medium text-slate-700"><li className="flex gap-3"><span className="text-brand-600">✓</span>Connected logistics workflows</li><li className="flex gap-3"><span className="text-brand-600">✓</span>Practical data and automation challenges</li></ul>
                 </div>
-                <img src={images.technology} alt="Operations team using shipment technology" className="h-full min-h-64 w-full object-cover" />
+                <img src={images.technology} alt="Operations team using shipment technology" loading="lazy" decoding="async" className="h-full min-h-64 w-full object-cover" />
               </article>
 
               <article className="enterprise-card rounded-xl p-8 md:col-span-4 lg:p-10">
@@ -83,7 +83,7 @@ export default function Careers() {
               </article>
 
               <article className="enterprise-card overflow-hidden rounded-xl md:col-span-8 md:grid md:grid-cols-2">
-                <img src={images.team} alt="A collaborative logistics team" className="h-full min-h-64 w-full object-cover" />
+                <img src={images.team} alt="A collaborative logistics team" loading="lazy" decoding="async" className="h-full min-h-64 w-full object-cover" />
                 <div className="p-8 lg:p-10">
                   <h3 className="font-display text-2xl font-bold">Work that supports people</h3>
                   <p className="mt-4 leading-7 text-slate-600">We aim to create a stable, respectful environment where good work is recognized and teams can build for the long term.</p>
