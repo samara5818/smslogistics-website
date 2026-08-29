@@ -1,7 +1,7 @@
 import Container from "./Container";
 import { useState } from "react";
 
-const proofChips = ["Multimodal Operations", "Global Coverage", "Carrier + EDI + API"];
+const proofChips = ["Freight Transport", "Warehouse Support", "Last-mile Delivery"];
 
 export default function Hero() {
   const [videoFailed, setVideoFailed] = useState(false);
@@ -35,14 +35,15 @@ export default function Hero() {
         <div className="grid items-center gap-12">
           <div className="max-w-[760px]">
             <div className="mb-6 inline-flex items-center rounded border border-blue-300/30 bg-blue-500/15 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.16em] text-blue-100 backdrop-blur-md">
-              Enterprise logistics command center
+              Logistics support across Andhra Pradesh
             </div>
             <h1 className="text-balance font-display text-4xl font-bold leading-[1.06] tracking-tight text-white sm:text-5xl lg:text-[64px]">
-              End-to-end shipment visibility, built for modern logistics.
+              Reliable logistics, from pickup to final delivery.
             </h1>
 
             <p className="mt-6 max-w-[620px] text-base leading-8 text-slate-200 sm:text-xl">
-              Predictive ETAs, exception alerts, and one dashboard for all transport modes.
+              Freight movement, warehouse coordination, route planning, and last-mile delivery from
+              a team focused on clear communication and dependable execution.
             </p>
 
             <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">

@@ -2,16 +2,16 @@ import Container from "./Container";
 
 const steps = [
   {
-    title: "Connect Data",
-    detail: "API / EDI / IoT + carrier partners",
+    title: "Share Your Requirement",
+    detail: "Tell us the pickup, destination, shipment details, and timing.",
   },
   {
-    title: "Monitor Flow",
-    detail: "Milestones + ETAs + inventory in motion",
+    title: "Confirm the Plan",
+    detail: "We review the route, handling needs, schedule, and commercial estimate.",
   },
   {
-    title: "Resolve & Improve",
-    detail: "Alerts, workflows, and KPI reporting",
+    title: "Move and Coordinate",
+    detail: "Our team coordinates the movement and keeps you informed through delivery.",
   },
 ];
 
@@ -20,12 +20,12 @@ export default function HowItWorks() {
     <section id="how-it-works" className="bg-white py-16 sm:py-20 lg:py-24" aria-labelledby="how-it-works-title">
       <Container>
         <div className="mx-auto max-w-3xl text-center">
-          <p className="text-xs font-bold uppercase tracking-[0.22em] text-brand-700">Powered by connected data</p>
+          <p className="text-xs font-bold uppercase tracking-[0.22em] text-brand-700">A clear, practical process</p>
           <h2
             id="how-it-works-title"
             className="mt-3 font-display text-3xl font-bold tracking-tight text-brand-950 sm:text-4xl lg:text-5xl"
           >
-            From fragmented updates to operational control
+            From requirement to delivery
           </h2>
         </div>
 

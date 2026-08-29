@@ -13,66 +13,59 @@ type CoveragePoint = {
 
 type Mode = "Ocean" | "Air" | "Road" | "Rail";
 
-const center: [number, number] = [20, 0];
+const center: [number, number] = [16.4, 80.55];
 const locationRotationMs = 4200;
 
 const modes: Mode[] = ["Ocean", "Air", "Road", "Rail"];
 
 const coveragePoints: CoveragePoint[] = [
   {
-    region: "Singapore Hub",
-    position: [1.3521, 103.8198],
-    summary: "APAC gateway supporting cross-dock operations and multimodal transfer planning.",
-    services: ["Port transfer", "Cross-dock handling", "Carrier coordination"],
-    partnerNote: "Regional forwarding partner enabled for fast handoffs.",
+    region: "Guntur",
+    position: [16.3067, 80.4365],
+    summary: "Core service area for freight coordination, warehouse support, and local delivery.",
+    services: ["Freight coordination", "Warehouse support", "Last-mile delivery"],
+    partnerNote: "Contact us to confirm service availability for your pickup and destination.",
   },
   {
-    region: "Rotterdam Corridor",
-    position: [51.9244, 4.4777],
-    summary: "European intake lane with customs visibility and rail handoff coverage.",
-    services: ["Ocean arrival", "Rail handoff", "ETA exception monitoring"],
-    partnerNote: "Customs broker support available for corridor operations.",
+    region: "Vijayawada",
+    position: [16.5062, 80.648],
+    summary: "Regional corridor support for scheduled freight and distribution movements.",
+    services: ["Road freight", "Delivery scheduling", "Route coordination"],
+    partnerNote: "Coverage depends on shipment type, timing, and handling requirements.",
   },
   {
-    region: "US Midwest Lane",
-    position: [41.8781, -87.6298],
-    summary: "High-volume inland routing with warehouse staging and SLA monitoring.",
-    services: ["Road dispatch", "Warehouse staging", "Linehaul planning"],
-    partnerNote: "Dedicated carrier pool active for regional distribution.",
-  },
-  {
-    region: "Mumbai Network",
-    position: [19.076, 72.8777],
-    summary: "Domestic and export-facing operations with route control across western India.",
-    services: ["Export coordination", "Drayage support", "Milestone tracking"],
-    partnerNote: "Port and road partner coverage aligned for urgent movement.",
+    region: "Amaravati",
+    position: [16.573, 80.3575],
+    summary: "Local and regional logistics coordination across the capital-region corridor.",
+    services: ["Local dispatch", "Route planning", "Business deliveries"],
+    partnerNote: "Ask our team to confirm the right service plan for your movement.",
   },
 ];
 
 const modeStats: Record<Mode, Array<{ label: string; value: string }>> = {
   Ocean: [
-    { label: "Countries", value: "100+" },
-    { label: "Ports", value: "250+" },
-    { label: "Carriers", value: "12K+" },
-    { label: "Events/Day", value: "1.6M" },
+    { label: "Support", value: "Port" },
+    { label: "Planning", value: "Routes" },
+    { label: "Handling", value: "Cargo" },
+    { label: "Updates", value: "Direct" },
   ],
   Air: [
-    { label: "Countries", value: "85+" },
-    { label: "Airports", value: "180+" },
-    { label: "Carriers", value: "4.8K+" },
-    { label: "Events/Day", value: "720K" },
+    { label: "Support", value: "Airport" },
+    { label: "Planning", value: "Time" },
+    { label: "Handling", value: "Cargo" },
+    { label: "Updates", value: "Direct" },
   ],
   Road: [
-    { label: "Countries", value: "40+" },
-    { label: "Road Hubs", value: "520+" },
-    { label: "Carriers", value: "8.1K+" },
-    { label: "Events/Day", value: "2.1M" },
+    { label: "Support", value: "Pickup" },
+    { label: "Planning", value: "Lanes" },
+    { label: "Handling", value: "Freight" },
+    { label: "Updates", value: "Direct" },
   ],
   Rail: [
-    { label: "Countries", value: "32+" },
-    { label: "Rail Hubs", value: "140+" },
-    { label: "Carriers", value: "1.2K+" },
-    { label: "Events/Day", value: "380K" },
+    { label: "Support", value: "Station" },
+    { label: "Planning", value: "Links" },
+    { label: "Handling", value: "Freight" },
+    { label: "Updates", value: "Direct" },
   ],
 };
 
@@ -94,7 +87,7 @@ function ActiveLocationController({ point }: { point: CoveragePoint }) {
   const map = useMap();
 
   useEffect(() => {
-    map.flyTo(point.position, 4, {
+    map.flyTo(point.position, 10, {
       animate: true,
       duration: 1.8,
     });
@@ -135,7 +128,7 @@ export default function CoverageMap() {
       <div className="absolute inset-0 z-0">
         <MapContainer
           center={center}
-          zoom={2}
+          zoom={9}
           scrollWheelZoom={false}
           zoomControl
           style={{ height: "100%", width: "100%" }}
@@ -182,11 +175,11 @@ export default function CoverageMap() {
       </div>
 
       <Container className="relative z-20 max-w-none px-4 sm:px-6 lg:px-8">
-        <div className="flex min-h-[640px] items-center justify-end py-6 sm:min-h-[700px] lg:pr-0">
-          <div className="w-full max-w-[320px] p-2 text-white sm:max-w-[340px] lg:h-[220px] lg:w-[360px] lg:max-w-none">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-200/80">Coverage</p>
-            <h2 id="coverage-title" className="mt-2 text-lg font-semibold tracking-tight sm:text-xl">
-              Global map and live region context
+        <div className="flex min-h-[640px] items-center justify-center py-8 sm:min-h-[700px] sm:justify-end lg:pr-4">
+          <div className="w-full max-w-[380px] rounded-2xl border border-white/15 bg-slate-950/90 p-5 text-white shadow-2xl backdrop-blur-md sm:p-6 lg:w-[400px] lg:max-w-none">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-200">Coverage</p>
+            <h2 id="coverage-title" className="mt-2 text-xl font-semibold tracking-tight sm:text-2xl">
+              Regional service coverage
             </h2>
 
             <div className="mt-3">
@@ -200,7 +193,7 @@ export default function CoverageMap() {
                   setAutoRotate(false);
                   setActivePointIndex(Number(event.target.value));
                 }}
-                className="h-9 w-full rounded-lg border border-white/35 bg-transparent px-3 text-sm font-medium text-white outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-300/30"
+                className="h-11 w-full rounded-lg border border-white/25 bg-slate-900 px-3 text-sm font-medium text-white outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-300/30"
               >
                 {coveragePoints.map((point, index) => (
                   <option key={point.region} value={index} className="bg-slate-900 text-white">
@@ -210,19 +203,19 @@ export default function CoverageMap() {
               </select>
             </div>
 
-            <div className="mt-3 grid gap-3 lg:grid-cols-[1fr_120px]">
+            <div className="mt-5 grid gap-5 sm:grid-cols-[1fr_120px]">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-blue-100/70">
                   Active Location
                 </p>
                 <h3 className="mt-1 text-lg font-semibold">{activePoint.region}</h3>
-                <p className="mt-2 line-clamp-3 text-sm leading-5 text-white/78">{activePoint.summary}</p>
-                <p className="mt-2 text-[10px] uppercase tracking-wide text-white/55">{activePoint.partnerNote}</p>
+                <p className="mt-2 text-sm leading-6 text-white/80">{activePoint.summary}</p>
+                <p className="mt-3 text-xs leading-5 text-white/60">{activePoint.partnerNote}</p>
               </div>
 
-              <div className="grid gap-2 lg:grid-rows-3">
+              <div className="grid grid-cols-3 gap-2 sm:grid-cols-1 sm:grid-rows-3">
                 {modeStats[activeMode].slice(0, 3).map((stat) => (
-                  <div key={stat.label} className="rounded-xl border border-white/15 bg-transparent px-3 py-2">
+                  <div key={stat.label} className="rounded-xl border border-white/15 bg-white/10 px-3 py-2">
                     <p className="text-base font-semibold tracking-tight text-white">{stat.value}</p>
                     <p className="mt-0.5 text-[9px] font-medium uppercase tracking-[0.14em] text-white/75">
                       {stat.label}
@@ -232,7 +225,7 @@ export default function CoverageMap() {
               </div>
             </div>
 
-            <div className="mt-3 flex items-center gap-3 overflow-x-auto pb-1">
+            <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-3 border-t border-white/15 pt-4">
               {modes.map((mode) => (
                 <button
                   key={mode}
@@ -253,7 +246,7 @@ export default function CoverageMap() {
 
               <a
                 href="#quote"
-                className="ml-auto inline-flex h-8 shrink-0 items-center justify-center rounded-lg border border-white/25 bg-transparent px-3 text-[10px] font-semibold text-white transition hover:bg-white/10"
+                className="ml-auto inline-flex h-9 shrink-0 items-center justify-center rounded-lg border border-white/25 bg-white/10 px-4 text-xs font-semibold text-white transition hover:bg-white/20"
               >
                 Check Lanes
               </a>

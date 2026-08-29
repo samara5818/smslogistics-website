@@ -3,27 +3,27 @@ import Container from "./Container";
 const outcomes = [
   {
     icon: "01",
-    title: "Real-Time Visibility",
-    summary: "Monitor all lanes in one dashboard.",
-    bullets: ["Milestone tracking", "Predictive ETA confidence"],
+    title: "Freight Coordination",
+    summary: "Plan dependable movement across regional lanes.",
+    bullets: ["Pickup coordination", "Shipment status updates"],
   },
   {
     icon: "02",
-    title: "Exception Management",
-    summary: "Catch issues before SLA breaches.",
-    bullets: ["Alert prioritization", "Automated workflows"],
+    title: "Warehouse Support",
+    summary: "Keep goods organised between arrival and dispatch.",
+    bullets: ["Inbound coordination", "Dispatch readiness"],
   },
   {
     icon: "03",
-    title: "Cost Optimization",
-    summary: "Reduce waste across planning and routing.",
-    bullets: ["Lane performance insights", "Carrier mix balancing"],
+    title: "Route Planning",
+    summary: "Choose practical routes for each movement.",
+    bullets: ["Lane planning", "Delivery scheduling"],
   },
   {
     icon: "04",
-    title: "Partner Network",
-    summary: "Connect carriers and teams on one platform.",
-    bullets: ["EDI and API integrations", "Shared operations views"],
+    title: "Last-mile Delivery",
+    summary: "Coordinate the final leg to customers and businesses.",
+    bullets: ["Local dispatch", "Delivery coordination"],
   },
 ];
 
@@ -35,11 +35,11 @@ export default function Outcomes() {
           <div className="max-w-3xl">
             <p className="text-xs font-bold uppercase tracking-[0.22em] text-brand-700">Operational outcomes</p>
           <h2 id="outcomes-title" className="mt-3 font-display text-3xl font-bold tracking-tight text-brand-950 sm:text-4xl lg:text-5xl">
-            Outcomes that improve reliability and cost
+            Practical support at every stage of movement
           </h2>
-          <p className="mt-4 max-w-2xl text-lg leading-8 text-slate-600">One connected operational layer for every shipment, partner, and exception.</p>
+          <p className="mt-4 max-w-2xl text-lg leading-8 text-slate-600">Flexible services for businesses moving goods through Guntur and key Andhra Pradesh corridors.</p>
           </div>
-          <a href="#how-it-works" className="text-sm font-bold text-brand-700 hover:underline">See how the platform works →</a>
+          <a href="#how-it-works" className="text-sm font-bold text-brand-700 hover:underline">See how we work →</a>
         </div>
 
         <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">

@@ -1,11 +1,11 @@
 import Container from "./Container";
 
-const logos = ["Retail", "Manufacturing", "Pharma", "E-commerce", "3PL", "Cold Chain"];
+const logos = ["Retail", "Manufacturing", "Pharma", "E-commerce", "Distribution", "Cold Chain"];
 
 const metrics = [
-  { value: "98%", label: "On-Time Visibility" },
-  { value: "30%", label: "Fewer Exceptions" },
-  { value: "< 2 Weeks", label: "Typical Setup" },
+  { value: "Plan", label: "Routes and Capacity" },
+  { value: "Move", label: "Freight and Inventory" },
+  { value: "Deliver", label: "To the Final Mile" },
 ];
 
 export default function TrustStrip() {
@@ -16,7 +16,7 @@ export default function TrustStrip() {
           id="trust-strip-title"
           className="text-center text-xs font-bold uppercase tracking-[0.22em] text-slate-500"
         >
-          Built for high-performance supply chain teams
+          Logistics support for growing businesses
         </h2>
 
         <div className="mt-8 flex gap-3 overflow-x-auto pb-2 lg:grid lg:grid-cols-6 lg:gap-6">

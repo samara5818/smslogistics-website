@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import Home from "./pages/Home";
-import Login from "./pages/Login";
-import PricingCalculator from "./pages/PricingCalculator";
-import Operations from "./pages/Operations";
-import Careers from "./pages/Careers";
-import Technology from "./pages/Technology";
+
+const Login = lazy(() => import("./pages/Login"));
+const PricingCalculator = lazy(() => import("./pages/PricingCalculator"));
+const Operations = lazy(() => import("./pages/Operations"));
+const Careers = lazy(() => import("./pages/Careers"));
+const Technology = lazy(() => import("./pages/Technology"));
 
 export default function App() {
   const [path, setPath] = useState(window.location.pathname);
@@ -37,25 +38,12 @@ export default function App() {
     };
   }, []);
 
-  if (path === "/login") {
-    return <Login />;
-  }
+  let page = <Home />;
+  if (path === "/login") page = <Login />;
+  if (path === "/pricing-calculator") page = <PricingCalculator />;
+  if (path === "/operations") page = <Operations />;
+  if (path === "/careers") page = <Careers />;
+  if (path === "/technology") page = <Technology />;
 
-  if (path === "/pricing-calculator") {
-    return <PricingCalculator />;
-  }
-
-  if (path === "/operations") {
-    return <Operations />;
-  }
-
-  if (path === "/careers") {
-    return <Careers />;
-  }
-
-  if (path === "/technology") {
-    return <Technology />;
-  }
-
-  return <Home />;
+  return <Suspense fallback={<div className="min-h-screen bg-white" aria-label="Loading page" />}>{page}</Suspense>;
 }
