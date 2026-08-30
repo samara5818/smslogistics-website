@@ -1,162 +1,53 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Container from "../components/Container";
 import Header from "../components/Header";
+import { calculateFreightEstimate, recommendVehicle, VEHICLES, type BodyType, type FreightEstimate, type PickupTime } from "../utils/freightPricing";
 
 type Step = "route" | "load" | "vehicle" | "requirements" | "price";
-type FormData = {
-  pickup: string; delivery: string; distance: number | null; loadType: string; weight: string;
-  packageCount: string; dimensions: string; recommendedVehicle: string; selectedVehicle: string;
-  bodyType: string; pickupDate: string; pickupTime: string; loadingPoints: string;
-  unloadingPoints: string; loadingAssistance: boolean; specialRequirements: string;
-};
-type Estimate = {
-  recommendedVehicle: string; distance: number; transitEstimate: string;
-  estimatedPriceMin: number; estimatedPriceMax: number; estimateId: string;
-};
+type FormData = { pickup:string; delivery:string; distance:number|null; loadType:string; weight:string; weightUnit:"kg"|"mt"; length:string; width:string; height:string; recommendedVehicle:string; selectedVehicle:string; bodyType:BodyType; pickupDate:string; pickupTime:PickupTime; loadingPoints:string; unloadingPoints:string; loadingAssistance:boolean; urgent:boolean; specialRequirements:string };
+const steps:Array<{key:Step;label:string}>=[{key:"route",label:"Route"},{key:"load",label:"Load"},{key:"vehicle",label:"Vehicle"},{key:"requirements",label:"Requirements"},{key:"price",label:"Price"}];
+const loadTypes=["fmcg","ecommerce","electronics","furniture","machinery","automobile-parts","textiles","vegetables","packaged-food","construction-material","industrial-material","household-goods","general-cargo","other"];
+const initial:FormData={pickup:"",delivery:"",distance:null,loadType:"",weight:"",weightUnit:"kg",length:"",width:"",height:"",recommendedVehicle:"",selectedVehicle:"",bodyType:"any",pickupDate:"",pickupTime:"flexible",loadingPoints:"1",unloadingPoints:"1",loadingAssistance:false,urgent:false,specialRequirements:""};
+const money=new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0});
+const number=new Intl.NumberFormat("en-IN",{maximumFractionDigits:0});
+const label=(v:string)=>v.replaceAll("-"," ").replace(/\b\w/g,c=>c.toUpperCase());
 
-const steps: Array<{ key: Step; label: string }> = [
-  { key: "route", label: "Route" }, { key: "load", label: "Load" },
-  { key: "vehicle", label: "Vehicle" }, { key: "requirements", label: "Requirements" },
-  { key: "price", label: "Price" },
-];
-const initialData: FormData = {
-  pickup: "", delivery: "", distance: null, loadType: "", weight: "", packageCount: "",
-  dimensions: "", recommendedVehicle: "", selectedVehicle: "", bodyType: "",
-  pickupDate: "", pickupTime: "", loadingPoints: "1", unloadingPoints: "1",
-  loadingAssistance: false, specialRequirements: "",
-};
-const showServiceTiers = false;
-const numberFormat = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 });
-const currencyFormat = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
+function Progress({current}:{current:Step}){const active=steps.findIndex(s=>s.key===current);return <ol className="flex w-full items-start">{steps.map((s,i)=><li key={s.key} className="relative flex flex-1 flex-col items-center">{i>0&&<span className={`absolute right-1/2 top-4 h-0.5 w-full ${i<=active?"bg-emerald-500":"bg-slate-200"}`}/>}<span className={`relative z-10 flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold ${i<active?"bg-emerald-500 text-white":i===active?"bg-brand-700 text-white":"border border-slate-300 bg-white text-slate-400"}`}>{i<active?"✓":i+1}</span><span className={`mt-2 text-xs font-semibold ${i===active?"text-brand-700":"hidden text-slate-400 sm:block"}`}>{s.label}</span></li>)}</ol>}
+function Field({title,children}:{title:string;children:React.ReactNode}){return <label className="block text-sm font-semibold text-slate-700"><span>{title}</span><span className="mt-2 block">{children}</span></label>}
+const inputClass="h-12 w-full rounded-xl border border-slate-300 bg-white px-4 text-sm outline-none focus:border-brand-600 focus:ring-2 focus:ring-blue-100";
 
-function PinIcon() {
-  return <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>;
-}
+export default function PricingCalculator(){
+ const [step,setStep]=useState<Step>("route"); const [data,setData]=useState<FormData>(initial); const [distanceState,setDistanceState]=useState<"idle"|"loading"|"ready"|"error">("idle"); const [estimate,setEstimate]=useState<FreightEstimate|null>(null); const [error,setError]=useState("");
+ const update=<K extends keyof FormData>(k:K,v:FormData[K])=>setData(o=>({...o,[k]:v}));
+ const weightKg=useMemo(()=>{const n=Number(data.weight)||0;return data.weightUnit==="mt"?n*1000:n},[data.weight,data.weightUnit]);
+ const volumeCft=useMemo(()=>{const l=Number(data.length)||0,w=Number(data.width)||0,h=Number(data.height)||0;return l&&w&&h?l*w*h:0},[data.length,data.width,data.height]);
+ const recommended=useMemo(()=>recommendVehicle(weightKg,volumeCft),[weightKg,volumeCft]);
+ useEffect(()=>{if(weightKg)update("recommendedVehicle",recommended.id)},[recommended.id,weightKg]);
+ useEffect(()=>{if(!data.pickup.trim()||!data.delivery.trim()){setDistanceState("idle");update("distance",null);return} const c=new AbortController();const timer=window.setTimeout(async()=>{setDistanceState("loading");try{const geo=async(q:string)=>{const r=await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`,{signal:c.signal,headers:{"Accept-Language":"en"}});if(!r.ok)throw Error();const x=await r.json() as Array<{lat:string;lon:string}>;if(!x[0])throw Error();return [Number(x[0].lon),Number(x[0].lat)] as const};const [a,b]=await Promise.all([geo(data.pickup),geo(data.delivery)]);const r=await fetch(`https://router.project-osrm.org/route/v1/driving/${a.join(",")};${b.join(",")}?overview=false`,{signal:c.signal});const x=await r.json() as {routes?:Array<{distance:number}>};if(!x.routes?.[0])throw Error();update("distance",Math.round(x.routes[0].distance/1000));setDistanceState("ready")}catch(e){if((e as Error).name!=="AbortError"){update("distance",null);setDistanceState("error")}}},650);return()=>{clearTimeout(timer);c.abort()}},[data.pickup,data.delivery]);
+ const nextRoute=()=>{if(!data.pickup.trim()||!data.delivery.trim()){setError("Enter both pickup and delivery locations.");return}if(distanceState!=="ready"||!data.distance){setError("Please wait for a valid road distance to be calculated.");return}setError("");setStep("load")};
+ const nextLoad=()=>{if(!data.loadType||weightKg<=0){setError("Select the load type and enter a valid shipment weight.");return}if(weightKg>VEHICLES[VEHICLES.length-1].payloadKg){setError("This load is above the online estimator limit. Please contact our team for a custom movement plan.");return}setError("");setStep("vehicle")};
+ const calculate=()=>{if(!data.distance)return;const result=calculateFreightEstimate({distanceKm:data.distance,loadType:data.loadType,weightKg,volumeCft,requestedVehicleId:data.selectedVehicle||recommended.id,bodyType:data.bodyType,pickupTime:data.pickupTime,loadingPoints:Number(data.loadingPoints)||1,unloadingPoints:Number(data.unloadingPoints)||1,loadingAssistance:data.loadingAssistance,urgent:data.urgent});setEstimate(result);setStep("price");window.scrollTo({top:0,behavior:"smooth"})};
+ const whatsapp=useMemo(()=>{if(!estimate)return "";const text=`Freight enquiry ${estimate.estimateId}\n${data.pickup} → ${data.delivery}\n${estimate.selectedVehicle.label}\n${number.format(estimate.priceMin)}–${number.format(estimate.priceMax)} INR\nPlease confirm final availability and price.`;return `https://wa.me/918187008434?text=${encodeURIComponent(text)}`},[estimate,data.pickup,data.delivery]);
+ return <div className="min-h-screen bg-[#f7f9fb]"><Header forceSolid/><main className="pt-16 lg:pt-[76px]">
+ <section className="border-b border-slate-200 bg-white px-4 py-12 sm:py-16"><p className="text-center text-xs font-bold uppercase tracking-[.2em] text-brand-700">SMS Logistics Freight Estimator</p><h1 className="mt-3 text-center text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">Know your freight price before you book</h1><p className="mx-auto mt-4 max-w-2xl text-center text-sm leading-6 text-slate-500 sm:text-base">Enter your route and cargo details. We&apos;ll recommend a suitable vehicle and give you an instant indicative transportation price.</p><div className="mx-auto mt-7 grid max-w-4xl grid-cols-2 gap-2 lg:grid-cols-4">{["Instant estimate","Vehicle recommendation","Road-distance based","No login required"].map(x=><div key={x} className="flex min-h-11 items-center justify-center gap-2 rounded-full border border-slate-200 px-3 text-center text-xs font-medium text-slate-700"><span className="text-emerald-600">✓</span>{x}</div>)}</div></section>
+ <section className="py-10 sm:py-14"><Container><div className="mx-auto max-w-5xl"><Progress current={step}/><div className="mt-10 grid gap-7 lg:grid-cols-[1.2fr_.8fr]">
+ <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-enterprise sm:p-8">
+ {step==="route"&&<><Eyebrow n="1"/><h2 className="title">Where is your freight going?</h2><p className="help">Enter city, locality, PIN code or a complete address.</p><div className="mt-7 space-y-5"><Field title="Pickup location"><input className={inputClass} value={data.pickup} onChange={e=>update("pickup",e.target.value)} placeholder="e.g. Vijayawada, Andhra Pradesh"/></Field><Field title="Delivery location"><input className={inputClass} value={data.delivery} onChange={e=>update("delivery",e.target.value)} placeholder="e.g. Hyderabad, Telangana"/></Field></div><Error text={error}/><Primary onClick={nextRoute}>Continue to load details</Primary></>}
+ {step==="load"&&<><Eyebrow n="2"/><h2 className="title">Tell us about your load</h2><p className="help">Weight is required. Dimensions help us avoid recommending a vehicle that is too small by volume.</p><div className="mt-7 grid gap-5 sm:grid-cols-2"><Field title="Load type"><select className={inputClass} value={data.loadType} onChange={e=>update("loadType",e.target.value)}><option value="">Select cargo</option>{loadTypes.map(x=><option key={x} value={x}>{label(x)}</option>)}</select></Field><Field title="Approximate weight"><div className="flex"><input type="number" min="0" step="0.1" className={`${inputClass} rounded-r-none`} value={data.weight} onChange={e=>update("weight",e.target.value)} placeholder="2500"/><select className="h-12 rounded-r-xl border border-l-0 border-slate-300 px-3" value={data.weightUnit} onChange={e=>update("weightUnit",e.target.value as "kg"|"mt")}><option value="kg">KG</option><option value="mt">MT</option></select></div></Field><Field title="Length (ft) – optional"><input type="number" className={inputClass} value={data.length} onChange={e=>update("length",e.target.value)}/></Field><Field title="Width (ft) – optional"><input type="number" className={inputClass} value={data.width} onChange={e=>update("width",e.target.value)}/></Field><Field title="Height (ft) – optional"><input type="number" className={inputClass} value={data.height} onChange={e=>update("height",e.target.value)}/></Field></div>{weightKg>0&&<div className="mt-6 rounded-xl bg-blue-50 p-4"><p className="text-xs font-bold uppercase tracking-wider text-brand-700">Current recommendation</p><p className="mt-1 font-semibold text-slate-950">{recommended.label}</p><p className="mt-1 text-xs text-slate-500">Rated payload up to {number.format(recommended.payloadKg)} kg. Final suitability depends on actual cargo dimensions and loading conditions.</p></div>}<Error text={error}/><Nav back={()=>setStep("route")} next={nextLoad}/></>}
+ {step==="vehicle"&&<><Eyebrow n="3"/><h2 className="title">Choose your vehicle</h2><p className="help">We&apos;ve preselected the smallest suitable category based on the details you entered.</p><div className="mt-7 space-y-3">{VEHICLES.map(v=><button key={v.id} type="button" onClick={()=>update("selectedVehicle",v.id)} className={`flex w-full items-center justify-between rounded-xl border p-4 text-left ${(data.selectedVehicle||recommended.id)===v.id?"border-brand-600 bg-blue-50":"border-slate-200"}`}><span><span className="block font-semibold text-slate-900">{v.label}{v.id===recommended.id&&<span className="ml-2 rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-bold text-emerald-700">RECOMMENDED</span>}</span><span className="mt-1 block text-xs text-slate-500">Up to {number.format(v.payloadKg)} kg</span></span><span className="text-brand-700">{(data.selectedVehicle||recommended.id)===v.id?"●":"○"}</span></button>)}</div><div className="mt-6"><Field title="Body preference"><select className={inputClass} value={data.bodyType} onChange={e=>update("bodyType",e.target.value as BodyType)}><option value="any">Recommend for me</option><option value="open">Open body</option><option value="closed">Closed body</option><option value="container">Container</option></select></Field></div><Nav back={()=>setStep("load")} next={()=>setStep("requirements")}/></>}
+ {step==="requirements"&&<><Eyebrow n="4"/><h2 className="title">Trip requirements</h2><p className="help">Operational details help us make the estimate more realistic.</p><div className="mt-7 grid gap-5 sm:grid-cols-2"><Field title="Pickup date"><input type="date" min={new Date().toISOString().slice(0,10)} className={inputClass} value={data.pickupDate} onChange={e=>update("pickupDate",e.target.value)}/></Field><Field title="Pickup timing"><select className={inputClass} value={data.pickupTime} onChange={e=>update("pickupTime",e.target.value as PickupTime)}>{["flexible","morning","afternoon","evening","night"].map(x=><option key={x} value={x}>{label(x)}</option>)}</select></Field><Field title="Loading points"><input type="number" min="1" max="10" className={inputClass} value={data.loadingPoints} onChange={e=>update("loadingPoints",e.target.value)}/></Field><Field title="Unloading points"><input type="number" min="1" max="10" className={inputClass} value={data.unloadingPoints} onChange={e=>update("unloadingPoints",e.target.value)}/></Field></div><div className="mt-6 space-y-3"><Check checked={data.loadingAssistance} onChange={v=>update("loadingAssistance",v)} title="I may need loading / unloading manpower"/><Check checked={data.urgent} onChange={v=>update("urgent",v)} title="Urgent / priority vehicle placement"/></div><div className="mt-5"><Field title="Special requirements – optional"><textarea className="min-h-24 w-full rounded-xl border border-slate-300 p-4 text-sm outline-none focus:border-brand-600" value={data.specialRequirements} onChange={e=>update("specialRequirements",e.target.value)} placeholder="Fragile cargo, restricted entry timing, special handling, etc."/></Field></div><Nav back={()=>setStep("vehicle")} next={calculate} nextLabel="Calculate freight price"/></>}
+ {step==="price"&&estimate&&<Result estimate={estimate} data={data} whatsapp={whatsapp} reset={()=>{setData(initial);setEstimate(null);setStep("route")}}/>}
+ </div><Summary data={data} state={distanceState} weightKg={weightKg} recommended={recommended.label}/></div></div></Container></section>
+ <section className="border-t border-slate-200 bg-white py-14"><Container><div className="mx-auto max-w-3xl"><h2 className="text-center text-2xl font-semibold">Frequently asked questions</h2><div className="mt-8 divide-y divide-slate-200 rounded-2xl border border-slate-200 px-6">{[["Is this the final freight price?","No. This is an indicative estimate. Final price is confirmed after vehicle availability, actual cargo details, route/toll conditions and operational requirements are verified."],["How is the vehicle recommended?","The estimator uses the entered shipment weight and optional dimensions to identify a suitable vehicle category with capacity headroom."],["Can I request a different truck?","Yes. You can override the recommendation. Our team will confirm whether the chosen vehicle is operationally suitable before placement."],["Can businesses request regular vehicles?","Yes. For recurring, dedicated or monthly transportation requirements, contact our team for contract pricing."]].map(([q,a])=><details key={q} className="py-5"><summary className="cursor-pointer font-semibold text-slate-900">{q}</summary><p className="mt-3 text-sm leading-6 text-slate-600">{a}</p></details>)}</div></div></Container></section>
+ <section className="bg-brand-950 py-12 text-center text-white"><Container><h2 className="text-2xl font-semibold">Need regular or contract transportation?</h2><p className="mx-auto mt-3 max-w-xl text-sm text-white/70">Talk to SMS Logistics for dedicated vehicles, recurring lanes and customized commercial pricing.</p><a href="tel:+918187008434" className="mt-6 inline-flex rounded-xl bg-white px-6 py-3 text-sm font-bold text-brand-950">Talk to our team</a></Container></section>
+ </main></div>}
 
-function Progress({ current }: { current: Step }) {
-  const active = steps.findIndex((step) => step.key === current);
-  return <ol className="flex w-full items-start" aria-label="Estimator progress">
-    {steps.map((step, index) => {
-      const complete = index < active; const currentStep = index === active;
-      return <li key={step.key} className="relative flex flex-1 flex-col items-center">
-        {index > 0 && <span className={`absolute right-1/2 top-4 h-0.5 w-full ${index <= active ? "bg-emerald-500" : "bg-slate-200"}`} />}
-        <span className={`relative z-10 flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold ${complete ? "bg-emerald-500 text-white" : currentStep ? "bg-brand-700 text-white" : "border border-slate-300 bg-white text-slate-400"}`}>{complete ? "✓" : index + 1}</span>
-        <span className={`mt-2 text-xs font-semibold ${currentStep ? "text-brand-700" : "hidden text-slate-400 lg:block"}`}>{step.label}</span>
-      </li>;
-    })}
-  </ol>;
-}
-
-function RouteSummary({ data, distanceState }: { data: FormData; distanceState: "idle" | "loading" | "ready" | "error" }) {
-  const distanceText = distanceState === "loading" ? "Calculating route…" : distanceState === "ready" && data.distance !== null ? `${numberFormat.format(data.distance)} km` : data.pickup && data.delivery ? "Distance will be calculated" : "Enter both locations";
-  return <aside className="rounded-2xl border border-slate-200 bg-white p-6 shadow-enterprise lg:sticky lg:top-24">
-    <h2 className="text-base font-semibold text-slate-950">Live route summary</h2>
-    <div className="mt-7 grid grid-cols-[18px_1fr] gap-x-3">
-      <div className="flex flex-col items-center"><span className="mt-1 h-3 w-3 rounded-full bg-brand-700"/><span className="my-1 min-h-12 w-px flex-1 bg-slate-300"/><span className="mb-1 h-3 w-3 rounded-full border-2 border-brand-700 bg-white"/></div>
-      <div className="space-y-7"><div><p className="text-xs font-medium uppercase tracking-wider text-slate-400">Pickup</p><p className={`mt-1 font-medium ${data.pickup ? "text-slate-900" : "text-slate-400"}`}>{data.pickup || "Pickup"}</p></div><div><p className="text-xs font-medium uppercase tracking-wider text-slate-400">Delivery</p><p className={`mt-1 font-medium ${data.delivery ? "text-slate-900" : "text-slate-400"}`}>{data.delivery || "Delivery"}</p></div></div>
-    </div>
-    <div className="mt-7 rounded-xl bg-blue-50 p-4"><p className="text-xs font-semibold uppercase tracking-wider text-brand-700">Estimated distance</p><p className="mt-1 text-xl font-semibold text-slate-950" aria-live="polite">{distanceText}</p></div>
-  </aside>;
-}
-
-export default function PricingCalculator() {
-  const [currentStep, setCurrentStep] = useState<Step>("route");
-  const [data, setData] = useState<FormData>(initialData);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [distanceState, setDistanceState] = useState<"idle" | "loading" | "ready" | "error">("idle");
-  const [estimate, setEstimate] = useState<Estimate | null>(null);
-  const [estimateState, setEstimateState] = useState<"idle" | "loading" | "error">("idle");
-
-  const update = <K extends keyof FormData>(key: K, value: FormData[K]) => setData((old) => ({ ...old, [key]: value }));
-
-  useEffect(() => {
-    if (!data.pickup.trim() || !data.delivery.trim()) { setDistanceState("idle"); update("distance", null); return; }
-    const controller = new AbortController();
-    const timer = window.setTimeout(async () => {
-      setDistanceState("loading");
-      try {
-        // TODO: Replace free-text geocoding with the organisation's chosen Places autocomplete provider.
-        const geocode = async (query: string) => {
-          const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query)}`, { signal: controller.signal, headers: { "Accept-Language": "en" } });
-          if (!response.ok) throw new Error("Geocoding failed");
-          const results = await response.json() as Array<{ lat: string; lon: string }>;
-          if (!results[0]) throw new Error("Location not found");
-          return [Number(results[0].lon), Number(results[0].lat)] as const;
-        };
-        const [pickup, delivery] = await Promise.all([geocode(data.pickup), geocode(data.delivery)]);
-        const route = await fetch(`https://router.project-osrm.org/route/v1/driving/${pickup.join(",")};${delivery.join(",")}?overview=false`, { signal: controller.signal });
-        if (!route.ok) throw new Error("Routing failed");
-        const result = await route.json() as { routes?: Array<{ distance: number }> };
-        if (!result.routes?.[0]) throw new Error("Route unavailable");
-        update("distance", Math.round(result.routes[0].distance / 1000)); setDistanceState("ready");
-      } catch (error) { if ((error as Error).name !== "AbortError") { update("distance", null); setDistanceState("error"); } }
-    }, 700);
-    return () => { window.clearTimeout(timer); controller.abort(); };
-  }, [data.pickup, data.delivery]);
-
-  const continueRoute = () => {
-    const next: Record<string, string> = {};
-    if (!data.pickup.trim()) next.pickup = "Enter a pickup location";
-    if (!data.delivery.trim()) next.delivery = "Enter a delivery location";
-    setErrors(next); if (!Object.keys(next).length) setCurrentStep("load");
-  };
-  const calculate = async (event: FormEvent) => {
-    event.preventDefault(); setCurrentStep("price"); setEstimateState("loading"); setEstimate(null);
-    try {
-      const response = await fetch("/api/freight/estimate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
-      if (!response.ok) throw new Error("Estimate unavailable");
-      setEstimate(await response.json() as Estimate); setEstimateState("idle");
-    } catch { setEstimateState("error"); }
-  };
-  const whatsappUrl = useMemo(() => {
-    const number = import.meta.env.VITE_WHATSAPP_NUMBER as string | undefined;
-    if (!number || !estimate) return "";
-    const message = `Freight enquiry ${estimate.estimateId}: ${data.pickup} to ${data.delivery}, ${numberFormat.format(estimate.distance)} km, estimate ${currencyFormat.format(estimate.estimatedPriceMin)}–${currencyFormat.format(estimate.estimatedPriceMax)}.`;
-    return `https://wa.me/${number.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`;
-  }, [data.delivery, data.pickup, estimate]);
-  const phone = import.meta.env.VITE_TRANSPORT_PHONE as string | undefined;
-
-  return <div className="min-h-screen bg-[#f7f9fb]">
-    <Header forceSolid />
-    <main className="pt-16 lg:pt-[76px]">
-      <section className="border-b border-slate-200 bg-white px-4 py-12 sm:py-16">
-        <h1 className="text-center text-[22px] font-medium tracking-tight text-slate-950 sm:text-[30px]">Calculate your freight price instantly</h1>
-        <p className="mx-auto mt-3 max-w-[520px] text-center text-[13px] leading-6 text-slate-500 sm:text-[15px]">Enter your pickup location, destination and load details, and we&apos;ll recommend the right vehicle and estimated freight price.</p>
-        <div className="mx-auto mt-7 grid max-w-4xl grid-cols-2 gap-2 lg:grid-cols-4">{["Instant estimate", "Vehicle recommendation", "Transparent pricing", "Business and personal loads"].map((item) => <div key={item} className="flex min-h-11 items-center justify-center gap-2 rounded-full border border-slate-200 px-3 text-center text-xs font-medium text-slate-700"><span className="text-brand-700">✓</span>{item}</div>)}</div>
-      </section>
-
-      <section className="py-10 sm:py-14"><Container><div className="mx-auto max-w-5xl"><Progress current={currentStep}/>
-        <div className="mt-10 grid gap-7 lg:grid-cols-[1.15fr_0.85fr] lg:items-start">
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-enterprise sm:p-8">
-            {currentStep === "route" && <div><p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-700">Step 1 of 5</p><h2 className="mt-2 text-2xl font-semibold text-slate-950">Where is your freight going?</h2><p className="mt-2 text-sm text-slate-500">Enter complete city, area, or address details for a more accurate route.</p>
-              <div className="mt-7 space-y-5">{(["pickup", "delivery"] as const).map((key) => <label key={key} className="block text-sm font-semibold text-slate-700"><span className="capitalize">{key} location</span><span className="relative mt-2 block"><span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-brand-700"><PinIcon/></span><input value={data[key]} onChange={(e) => { update(key, e.target.value); setErrors((old) => ({ ...old, [key]: "" })); }} autoComplete="off" placeholder={`Enter ${key} city or address`} className="h-14 w-full rounded-xl border border-slate-300 pl-12 pr-4 outline-none focus:border-brand-600 focus:ring-2 focus:ring-blue-100"/></span>{errors[key] && <span className="mt-2 block text-xs font-medium text-red-600">{errors[key]}</span>}</label>)}</div>
-              <div className="mt-7 lg:hidden"><RouteSummary data={data} distanceState={distanceState}/></div>
-              <button type="button" onClick={continueRoute} className="mt-7 h-14 w-full rounded-xl bg-brand-700 px-6 text-sm font-bold text-white transition hover:bg-brand-600">Continue to load details</button>
-            </div>}
-            {currentStep === "load" && <Placeholder title="Load details" description="Load-type, weight, package-count, and dimensions controls will be completed in the next estimator phase." back={() => setCurrentStep("route")} next={() => setCurrentStep("vehicle")}/>}
-            {currentStep === "vehicle" && <Placeholder title="Vehicle selection" description="Vehicle recommendation and selection controls will be completed in the next estimator phase." back={() => setCurrentStep("load")} next={() => setCurrentStep("requirements")}/>}
-            {currentStep === "requirements" && <form onSubmit={calculate}><Placeholder title="Shipment requirements" description="Pickup timing and operational requirement controls will be completed in the next estimator phase." back={() => setCurrentStep("vehicle")} nextLabel="Calculate freight price" submit/></form>}
-            {currentStep === "price" && <Result estimate={estimate} state={estimateState} data={data} whatsappUrl={whatsappUrl} phone={phone}/>}
-          </div>
-          <div className="hidden lg:block"><RouteSummary data={data} distanceState={distanceState}/></div>
-        </div>
-      </div></Container></section>
-      <section className="border-t border-slate-200 bg-white py-14"><Container><div className="mx-auto max-w-3xl text-center"><h2 className="text-2xl font-semibold text-slate-950">Frequently asked questions</h2><p className="mt-3 text-sm text-slate-500">Detailed estimator FAQs will be added with the remaining shipment steps.</p></div></Container></section>
-      <section className="bg-brand-950 py-12 text-center text-white"><Container><h2 className="text-2xl font-semibold">Need contract transportation support?</h2><p className="mt-3 text-sm text-white/70">Contract-lane enquiry options will be added in the next phase.</p></Container></section>
-    </main>
-  </div>;
-}
-
-function Placeholder({ title, description, back, next, nextLabel = "Continue", submit = false }: { title: string; description: string; back: () => void; next?: () => void; nextLabel?: string; submit?: boolean }) {
-  return <div><p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-700">Estimator setup</p><h2 className="mt-2 text-2xl font-semibold">{title}</h2><div className="mt-7 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-7 text-sm leading-6 text-slate-600">{description}</div><div className="mt-7 flex gap-3"><button type="button" onClick={back} className="h-12 rounded-xl border border-slate-300 px-5 text-sm font-semibold">Back</button><button type={submit ? "submit" : "button"} onClick={submit ? undefined : next} className="h-12 flex-1 rounded-xl bg-brand-700 px-5 text-sm font-bold text-white">{nextLabel}</button></div></div>;
-}
-
-function Result({ estimate, state, data, whatsappUrl, phone }: { estimate: Estimate | null; state: "idle" | "loading" | "error"; data: FormData; whatsappUrl: string; phone?: string }) {
-  if (state === "loading") return <div className="py-16 text-center" aria-live="polite"><span className="mx-auto block h-9 w-9 animate-spin rounded-full border-4 border-blue-100 border-t-brand-700"/><p className="mt-5 font-medium text-slate-700">Finding the best transportation estimate for your shipment…</p></div>;
-  if (state === "error" || !estimate) return <div className="py-12 text-center"><h2 className="text-xl font-semibold">We couldn&apos;t calculate an estimate</h2><p className="mt-3 text-sm text-slate-500">The pricing service is not available yet. Please request a final quote from our team.</p><a href="/#quote" className="mt-6 inline-flex h-12 items-center rounded-xl bg-brand-700 px-6 text-sm font-bold text-white">Request final quote</a></div>;
-  return <div><p className="text-center text-xs font-bold uppercase tracking-[0.18em] text-brand-700">Estimated freight price</p><p className="mt-3 text-center text-[28px] font-medium text-brand-700 sm:text-[36px]">{currencyFormat.format(estimate.estimatedPriceMin)} – {currencyFormat.format(estimate.estimatedPriceMax)}</p><p className="mt-2 text-center text-sm text-slate-500">Estimate ID: {estimate.estimateId}</p>
-    {!showServiceTiers && <div className="mt-7 rounded-xl border border-blue-200 bg-blue-50 p-5 text-center"><p className="font-semibold text-slate-900">{estimate.recommendedVehicle}</p><p className="mt-1 text-sm text-slate-600">{numberFormat.format(estimate.distance)} km · {estimate.transitEstimate}</p></div>}
-    <div className="mt-6 grid gap-4 md:grid-cols-2"><div className="rounded-xl border border-slate-200 p-5"><h3 className="font-semibold">Shipment summary</h3><dl className="mt-3 space-y-2 text-sm text-slate-600"><div className="flex justify-between gap-4"><dt>Route</dt><dd className="text-right">{data.pickup} → {data.delivery}</dd></div><div className="flex justify-between"><dt>Distance</dt><dd>{numberFormat.format(estimate.distance)} km</dd></div><div className="flex justify-between"><dt>Vehicle</dt><dd>{estimate.recommendedVehicle}</dd></div></dl></div><div className="rounded-xl border border-amber-200 bg-amber-50 p-5 text-xs leading-5 text-amber-950">The displayed freight price is an estimated transportation cost based on the information provided. Final pricing may vary depending on actual shipment weight and dimensions, vehicle availability, route conditions, toll charges, loading/unloading requirements, waiting time, restricted-entry timings and other operational requirements. Final commercial pricing will be confirmed by SMS Logistics before vehicle placement.</div></div>
-    <div className="mt-6 grid gap-3 sm:grid-cols-3"><a href="/#quote" className="inline-flex h-12 items-center justify-center rounded-xl bg-brand-700 px-4 text-sm font-bold text-white">Request final quote</a>{whatsappUrl ? <a href={whatsappUrl} target="_blank" rel="noreferrer" className="inline-flex h-12 items-center justify-center rounded-xl border border-emerald-600 px-4 text-sm font-bold text-emerald-700">WhatsApp us</a> : <span className="inline-flex h-12 items-center justify-center rounded-xl border border-slate-200 text-sm text-slate-400">WhatsApp unavailable</span>}{phone ? <a href={`tel:${phone}`} className="inline-flex h-12 items-center justify-center rounded-xl border border-slate-300 px-4 text-sm font-bold">Call now</a> : <span className="inline-flex h-12 items-center justify-center rounded-xl border border-slate-200 text-sm text-slate-400">Call unavailable</span>}</div>
-  </div>;
-}
+function Eyebrow({n}:{n:string}){return <p className="text-xs font-bold uppercase tracking-[.18em] text-brand-700">Step {n} of 5</p>}
+function Error({text}:{text:string}){return text?<p className="mt-5 rounded-lg bg-red-50 p-3 text-sm font-medium text-red-700">{text}</p>:null}
+function Primary({onClick,children}:{onClick:()=>void;children:React.ReactNode}){return <button type="button" onClick={onClick} className="mt-7 h-13 w-full rounded-xl bg-brand-700 px-6 py-4 text-sm font-bold text-white hover:bg-brand-600">{children}</button>}
+function Nav({back,next,nextLabel="Continue"}:{back:()=>void;next:()=>void;nextLabel?:string}){return <div className="mt-7 flex gap-3"><button type="button" onClick={back} className="rounded-xl border border-slate-300 px-5 py-3 text-sm font-semibold">Back</button><button type="button" onClick={next} className="flex-1 rounded-xl bg-brand-700 px-5 py-3 text-sm font-bold text-white">{nextLabel}</button></div>}
+function Check({checked,onChange,title}:{checked:boolean;onChange:(v:boolean)=>void;title:string}){return <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 p-4 text-sm font-medium text-slate-700"><input type="checkbox" checked={checked} onChange={e=>onChange(e.target.checked)} className="h-4 w-4"/>{title}</label>}
+function Summary({data,state,weightKg,recommended}:{data:FormData;state:string;weightKg:number;recommended:string}){return <aside className="rounded-2xl border border-slate-200 bg-white p-6 shadow-enterprise lg:sticky lg:top-24"><h2 className="font-semibold text-slate-950">Shipment summary</h2><div className="mt-6 space-y-4 text-sm"><SummaryRow k="Pickup" v={data.pickup||"—"}/><SummaryRow k="Delivery" v={data.delivery||"—"}/><SummaryRow k="Road distance" v={state==="loading"?"Calculating…":data.distance?`${number.format(data.distance)} km`:"—"}/><SummaryRow k="Weight" v={weightKg?`${number.format(weightKg)} kg`:"—"}/><SummaryRow k="Recommended" v={weightKg?recommended:"—"}/></div>{state==="error"&&<p className="mt-5 text-xs leading-5 text-red-600">We couldn&apos;t calculate this route. Try adding the city/state or PIN code.</p>}</aside>}
+function SummaryRow({k,v}:{k:string;v:string}){return <div className="border-b border-slate-100 pb-3"><p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{k}</p><p className="mt-1 font-medium text-slate-800">{v}</p></div>}
+function Result({estimate,data,whatsapp,reset}:{estimate:FreightEstimate;data:FormData;whatsapp:string;reset:()=>void}){return <div><p className="text-xs font-bold uppercase tracking-[.18em] text-emerald-600">Instant estimate</p><h2 className="mt-2 text-2xl font-semibold">Your estimated freight price</h2><div className="mt-7 rounded-2xl bg-brand-950 p-6 text-white"><p className="text-sm text-white/65">Indicative transportation range</p><p className="mt-2 text-3xl font-bold sm:text-4xl">{money.format(estimate.priceMin)} – {money.format(estimate.priceMax)}</p><p className="mt-3 text-xs text-white/60">Estimate ID: {estimate.estimateId}</p></div><div className="mt-6 grid grid-cols-2 gap-3"><ResultCard k="Vehicle" v={estimate.selectedVehicle.label}/><ResultCard k="Distance" v={`${number.format(data.distance||0)} km`}/><ResultCard k="Transit" v={estimate.transitEstimate}/><ResultCard k="Payload entered" v={`${number.format(Number(data.weight)*(data.weightUnit==="mt"?1000:1))} kg`}/></div>{estimate.warnings.length>0&&<div className="mt-5 rounded-xl bg-amber-50 p-4 text-sm text-amber-800">{estimate.warnings.join(" ")} Our team will verify vehicle suitability before booking.</div>}<p className="mt-6 text-xs leading-5 text-slate-500">This is an indicative estimate, not a binding quotation. Final freight may vary with actual weight/dimensions, tolls, vehicle availability, route restrictions, waiting time, loading conditions and other operational factors.</p><div className="mt-7 grid gap-3 sm:grid-cols-2"><a href={whatsapp} target="_blank" rel="noreferrer" className="rounded-xl bg-emerald-600 px-5 py-4 text-center text-sm font-bold text-white">Confirm on WhatsApp</a><a href="tel:+918187008434" className="rounded-xl border border-slate-300 px-5 py-4 text-center text-sm font-bold text-slate-800">Call transportation team</a></div><button onClick={reset} className="mt-4 w-full text-sm font-semibold text-brand-700">Calculate another shipment</button></div>}
+function ResultCard({k,v}:{k:string;v:string}){return <div className="rounded-xl border border-slate-200 p-4"><p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{k}</p><p className="mt-1 text-sm font-semibold text-slate-900">{v}</p></div>}
